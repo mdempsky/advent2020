@@ -8,21 +8,21 @@ import (
 )
 
 func main() {
-	var x, y = 0, 0
-	var dx, dy = 1, 0 // facing
+	var x, y = 0, 0    // ship position
+	var dx, dy = 10, 1 // waypoint position (relative to ship)
 
 	for _, instr := range advent.InputLines() {
 		action, val := instr[0], int(advent.Atoi(instr[1:]))
 
 		switch action {
 		case 'N':
-			y += val
+			dy += val
 		case 'E':
-			x += val
+			dx += val
 		case 'S':
-			y -= val
+			dy -= val
 		case 'W':
-			x -= val
+			dx -= val
 		case 'F':
 			x += dx * val
 			y += dy * val
