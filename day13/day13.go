@@ -49,7 +49,7 @@ func gcd(a, b int) int {
 
 func mod(x, m int) int {
 	x %= m
-	if x < m {
+	if x < 0 {
 		x += m
 	}
 	return x
