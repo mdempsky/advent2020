@@ -34,29 +34,16 @@ Outer:
 		}
 	}
 
-	offset, modulo := 0, 1
+	t, modulo := 0, 1
 	for i, route := range routes {
-		if route == 0 {
-			continue
-		}
-
-		t := 0
-		for {
-			if x := (t + offset) % modulo; x != 0 {
-				t += modulo - x
-				continue
+		if route != 0 {
+			for (t+i)%route != 0 {
+				t += modulo
 			}
-			if x := (t + i) % route; x != 0 {
-				t += route - x
-				continue
-			}
-			break
+			modulo *= route / gcd(modulo, route)
 		}
-
-		modulo = modulo * route / gcd(modulo, route)
-		offset = modulo - t%modulo
 	}
-	fmt.Println("Part 2:", modulo-offset)
+	fmt.Println("Part 2:", t)
 }
 
 func gcd(a, b int) int {
