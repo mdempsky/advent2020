@@ -9,40 +9,34 @@ import (
 
 func main() {
 	lines := advent.InputLines()
-
 	earliest := int(advent.Atoi(lines[0]))
 
-	var routes []int
-	for _, route := range strings.Split(lines[1], ",") {
-		if route == "x" {
-			routes = append(routes, 0)
+	// Part 1.
+	best := 0
+	wait := func(route int) int { return mod(-earliest, route) }
+
+	// Part 2.
+	t, modulo := 0, 1
+
+	for i, s := range strings.Split(lines[1], ",") {
+		if s == "x" {
 			continue
 		}
-		routes = append(routes, int(advent.Atoi(route)))
+		route := int(advent.Atoi(s))
+
+		// Part 1.
+		if best == 0 || wait(route) < wait(best) {
+			best = route
+		}
+
+		// Part 2.
+		for (t+i)%route != 0 {
+			t += modulo
+		}
+		modulo *= route / gcd(modulo, route)
 	}
 
-Outer:
-	for i := 0; ; i++ {
-		for _, route := range routes {
-			if route == 0 {
-				continue
-			}
-			if (earliest+i)%route == 0 {
-				fmt.Println("Part 1:", i*route)
-				break Outer
-			}
-		}
-	}
-
-	t, modulo := 0, 1
-	for i, route := range routes {
-		if route != 0 {
-			for (t+i)%route != 0 {
-				t += modulo
-			}
-			modulo *= route / gcd(modulo, route)
-		}
-	}
+	fmt.Println("Part 1:", best*wait(best))
 	fmt.Println("Part 2:", t)
 }
 
@@ -51,4 +45,12 @@ func gcd(a, b int) int {
 		a, b = b, a%b
 	}
 	return a
+}
+
+func mod(x, m int) int {
+	x %= m
+	if x < m {
+		x += m
+	}
+	return x
 }
