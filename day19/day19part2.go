@@ -13,15 +13,20 @@ func main() {
 	rules := paras[0]
 	messages := paras[1]
 
-	cnf := compile(rules)
+	cnf1 := compile(rules)
+	cnf2 := compile(append(rules, []string{"8: 42 | 42 8", "11: 42 31 | 42 11 31"}...))
 
-	count := 0
+	count1, count2 := 0, 0
 	for _, message := range messages {
-		if match(cnf, message) {
-			count++
+		if match(cnf1, message) {
+			count1++
+		}
+		if match(cnf2, message) {
+			count2++
 		}
 	}
-	fmt.Println("Part 1:", count)
+	fmt.Println("Part 1:", count1)
+	fmt.Println("Part 2:", count2)
 }
 
 type pair struct {
@@ -32,22 +37,12 @@ type char struct {
 	x byte
 }
 
-type either struct {
-	a, b int
-}
-
-type alias struct {
-	a int
-}
-
-func (pair) isAlt()   {}
-func (char) isAlt()   {}
-func (either) isAlt() {}
-func (alias) isAlt()  {}
+func (pair) isAlt() {}
+func (char) isAlt() {}
 
 type alt interface{ isAlt() }
 
-type chomsky []alt
+type chomsky [][]alt
 
 func compile(lines []string) chomsky {
 	rules := map[string]string{}
@@ -57,14 +52,8 @@ func compile(lines []string) chomsky {
 	}
 
 	memo := map[string]int{}
+	alias := map[int][]int{}
 	var res chomsky
-
-	emit := func(s string, a alt) int {
-		n := len(res)
-		res = append(res, a)
-		memo[s] = n
-		return n
-	}
 
 	var do func(s string) int
 	do = func(s string) int {
@@ -72,33 +61,45 @@ func compile(lines []string) chomsky {
 			return x
 		}
 
+		n := len(res)
+		res = append(res, nil)
+		memo[s] = n
+
 		if rule, ok := rules[s]; ok {
-			n := len(res)
-			memo[s] = n
-			res = append(res, nil)
-			res[n] = alias{do(rule)}
-			return n
+			s = rule
 		}
 
-		if len(s) == 3 && s[0] == '"' {
-			return emit(s, char{s[1]})
+		for _, f := range strings.Split(s, " | ") {
+			if f := strings.SplitN(f, " ", 2); len(f) > 1 {
+				res[n] = append(res[n], pair{do(f[0]), do(f[1])})
+				continue
+			}
+			if f[0] == '"' {
+				res[n] = append(res[n], char{f[1]})
+				continue
+			}
+			alias[n] = append(alias[n], do(f))
 		}
 
-		if f := strings.SplitN(s, " | ", 2); len(f) > 1 {
-			return emit(s, either{do(f[0]), do(f[1])})
-		}
+		return n
+	}
+	do("0")
 
-		// "a b c" -> []string{"a", "b", "c"}
-		if f := strings.SplitN(s, " ", 2); len(f) > 1 {
-			return emit(s, pair{do(f[0]), do(f[1])})
+	// Eliminate unit rules.
+	var elim func(int)
+	elim = func(key int) {
+		if vals, ok := alias[key]; ok {
+			for _, val := range vals {
+				elim(val)
+				res[key] = append(res[key], res[val]...)
+			}
+			delete(alias, key)
 		}
-
-		panic(s)
+	}
+	for key := range alias {
+		elim(key)
 	}
 
-	if do("0") != 0 {
-		panic("wat")
-	}
 	return res
 }
 
@@ -115,47 +116,31 @@ func match(rules chomsky, message string) bool {
 	}
 
 	var m [N][N][M]bool
-	for w := 0; w <= len(message); w++ {
+	for w := 1; w <= len(message); w++ {
 		for start := 0; start+w <= len(message); start++ {
 			end := start + w
-			var done [M]bool
-			var do func(int)
-			do = func(rule int) {
-				if done[rule] {
-					return
-				}
-
+			for rule, alts := range rules {
 				found := false
-				switch alt := rules[rule].(type) {
-				case char:
-					if w == 1 && message[start] == alt.x {
-						found = true
-					}
-				case pair:
-					for mid := start + 1; mid < end; mid++ {
-						if m[start][mid][alt.a] && m[mid][end][alt.b] {
+				for _, alt := range alts {
+					switch alt := alt.(type) {
+					case char:
+						if w == 1 && message[start] == alt.x {
 							found = true
 						}
+					case pair:
+						for mid := start + 1; mid < end; mid++ {
+							if m[start][mid][alt.a] && m[mid][end][alt.b] {
+								found = true
+							}
+						}
+					default:
+						panic(alt)
 					}
-				case either:
-					do(alt.a)
-					do(alt.b)
-					if m[start][end][alt.a] || m[start][end][alt.b] {
-						found = true
+					if found {
+						break
 					}
-				case alias:
-					do(alt.a)
-					found = m[start][end][alt.a]
-				default:
-					panic(alt)
 				}
 				m[start][end][rule] = found
-
-				done[rule] = true
-			}
-
-			for rule := range rules {
-				do(rule)
 			}
 		}
 	}
