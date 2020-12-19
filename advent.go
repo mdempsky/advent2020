@@ -27,6 +27,14 @@ func InputLines() []string {
 	return strings.Split(strings.Trim(Input(), "\n"), "\n")
 }
 
+func InputParas() [][]string {
+	var res [][]string
+	for _, para := range strings.Split(strings.Trim(Input(), "\n"), "\n\n") {
+		res = append(res, strings.Split(para, "\n"))
+	}
+	return res
+}
+
 func InputInts() []int {
 	var res []int
 	for _, n := range InputLines() {
