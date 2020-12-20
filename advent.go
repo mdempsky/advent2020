@@ -50,3 +50,10 @@ func Atoi(s string) int64 {
 	}
 	return n
 }
+
+func Sscanf(str, format string, a ...interface{}) {
+	_, err := fmt.Sscanf(str, format, a...)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
