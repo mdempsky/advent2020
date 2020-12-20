@@ -19,6 +19,8 @@ type edge struct {
 	match  bool
 }
 
+func (e *edge) flip() { e.match = !e.match }
+
 func (e *edge) other(t *tile) *tile {
 	switch t {
 	case e.t1:
@@ -30,7 +32,7 @@ func (e *edge) other(t *tile) *tile {
 }
 
 func main() {
-	tiles := map[int]*tile{}
+	var tiles []*tile
 	for _, para := range advent.InputParas() {
 		var t tile
 		advent.Sscanf(para[0], "Tile %d:", &t.id)
@@ -39,7 +41,7 @@ func main() {
 				t.data[r][c] = para[1+r][c] == '#'
 			}
 		}
-		tiles[t.id] = &t
+		tiles = append(tiles, &t)
 	}
 
 	edges := map[uint16]*edge{}
@@ -63,7 +65,7 @@ func main() {
 
 		*ep = e
 		if flip {
-			e.match = !e.match
+			e.flip()
 		}
 	}
 
@@ -87,14 +89,14 @@ func main() {
 	for _, t := range tiles {
 		if t.neighbors() == 2 {
 			corners *= t.id
-			if first == nil || t.id < first.id {
+			if first == nil {
 				first = t
 			}
 		}
 	}
 	fmt.Println("Part 1:", corners)
 
-	for first.e.other(first) == nil && first.s.other(first) == nil {
+	for first.e.other(first) == nil || first.s.other(first) == nil {
 		first.rotateLeft()
 	}
 
@@ -107,7 +109,7 @@ func main() {
 			if right == nil {
 				break
 			}
-			for right.w.other(right) != this {
+			for right.w != this.e {
 				right.rotateLeft()
 			}
 			if !this.e.match {
@@ -121,13 +123,13 @@ func main() {
 		if down == nil {
 			break
 		}
-		for down.e.other(down) != this {
+		for down.e != this.s {
 			down.rotateLeft()
 		}
 		if !this.s.match {
 			down.flipV()
 		}
-		down.rotateLeft()
+		down.rotateLeft() // down.e becomes down.n, matching this.s
 		this = down
 	}
 
@@ -154,8 +156,8 @@ func main() {
 	var total int
 	for r := 0; r < 96; r++ {
 		for c := 0; c < 96; c++ {
-			img.data[r][c] = rows[r/8][c/8].data[1+(r%8)][1+(c%8)]
-			if img.data[r][c] {
+			if rows[r/8][c/8].data[1+(r%8)][1+(c%8)] {
+				img.data[r][c] = true
 				total++
 			}
 		}
@@ -260,20 +262,23 @@ func (t *tile) flipV() {
 	}
 
 	t.n, t.s = t.s, t.n
-	t.n.match = !t.n.match
-	t.e.match = !t.e.match
-	t.s.match = !t.s.match
-	t.w.match = !t.w.match
+	for _, e := range t.edges() {
+		e.flip()
+	}
 }
 
 func (t *tile) neighbors() int {
 	sum := 0
-	for _, e := range []*edge{t.n, t.e, t.s, t.w} {
+	for _, e := range t.edges() {
 		if e.t2 != nil {
 			sum++
 		}
 	}
 	return sum
+}
+
+func (t *tile) edges() [4]*edge {
+	return [4]*edge{t.n, t.e, t.s, t.w}
 }
 
 func v(b bool) uint16 {
