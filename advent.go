@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -55,5 +56,42 @@ func Sscanf(str, format string, a ...interface{}) {
 	_, err := fmt.Sscanf(str, format, a...)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func NextPermutation(data sort.Interface) bool {
+	n := data.Len()
+	for i := n - 2; i >= 0; i-- {
+		if data.Less(i, i+1) {
+			j := n - 1
+			for !data.Less(i, j) {
+				j--
+			}
+			data.Swap(i, j)
+			reverse(data, i+1, n)
+			return true
+		}
+	}
+
+	reverse(data, 0, n)
+	return false
+}
+
+func reverse(data sort.Interface, beg, end int) {
+	end--
+	for beg < end {
+		data.Swap(beg, end)
+
+		beg++
+		end--
+	}
+}
+
+func EachPermutation(data sort.Interface, f func()) {
+	for {
+		f()
+		if !NextPermutation(data) {
+			break
+		}
 	}
 }
