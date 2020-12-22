@@ -37,8 +37,12 @@ func InputParas() [][]string {
 }
 
 func InputInts() []int {
+	return Ints(InputLines())
+}
+
+func Ints(list []string) []int {
 	var res []int
-	for _, n := range InputLines() {
+	for _, n := range list {
 		res = append(res, int(Atoi(n)))
 	}
 	return res
