@@ -52,21 +52,24 @@ func play(seed string, cups, rounds int) []int {
 		next1 := next[current]
 		next2 := next[next1]
 		next3 := next[next2]
+		next4 := next[next3]
 
-		prev := current
+		dest := current
 		for {
-			prev--
-			if prev == 0 {
-				prev = cups
+			dest--
+			if dest == 0 {
+				dest = cups
 			}
-			if prev != next1 && prev != next2 && prev != next3 {
+			if dest != next1 && dest != next2 && dest != next3 {
 				break
 			}
 		}
 
-		next[current] = next[next3]
-		next[prev], next[next3] = next1, next[prev]
-		current = next[current]
+		next[current] = next4
+		current = next4
+
+		next[next3] = next[dest]
+		next[dest] = next1
 	}
 
 	return next
