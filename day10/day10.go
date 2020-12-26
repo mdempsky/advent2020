@@ -24,10 +24,9 @@ func main() {
 
 		for prev < joltage {
 			x := d0 + d1 + d2
-
-			prev++
 			d0, d1, d2 = 0, d0, d1
 
+			prev++
 			if prev == joltage {
 				d0 = x
 			}
