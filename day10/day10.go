@@ -11,35 +11,30 @@ func main() {
 	joltages := advent.InputInts()
 	sort.Ints(joltages)
 
-	var counts [3]int
+	// counts[x] is the number of x-jolt differences
+	var counts [4]int
 
 	// Loop invariant:
-	// distinct[0] is the number of ways to get (previous joltage)-3
-	// distinct[1] is ... (previous joltage)-2
-	// distinct[2] is ... (previous joltage)-1
-	// distinct[3] is ... (previous joltage)
-	var distinct [4]int
-	distinct[3] = 1
+	// di is the number of distinct ways to get prev-i
+	prev := 0
+	d0, d1, d2 := 1, 0, 0
 
-	for i, joltage := range joltages {
-		prev := 0
-		if i > 0 {
-			prev = joltages[i-1]
+	for _, joltage := range joltages {
+		counts[joltage-prev]++
+
+		for prev < joltage {
+			x := 0
+			if prev+1 == joltage {
+				x = d0 + d1 + d2
+			}
+
+			prev++
+			d0, d1, d2 = x, d0, d1
 		}
-		diff := joltage - prev
-
-		counts[diff-1]++
-
-		for i := 0; i < diff; i++ {
-			copy(distinct[:], distinct[1:])
-			distinct[3] = 0
-		}
-		distinct[3] = distinct[0] + distinct[1] + distinct[2]
 	}
 
-	counts[2]++
-	fmt.Println(counts[0] * counts[2])
+	counts[3]++
+	fmt.Println("Part 1:", counts[1]*counts[3])
 
-	fmt.Println(distinct[3])
-
+	fmt.Println("Part 2:", d0)
 }
