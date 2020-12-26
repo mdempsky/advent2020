@@ -23,13 +23,14 @@ func main() {
 		counts[joltage-prev]++
 
 		for prev < joltage {
-			x := 0
-			if prev+1 == joltage {
-				x = d0 + d1 + d2
-			}
+			x := d0 + d1 + d2
 
 			prev++
-			d0, d1, d2 = x, d0, d1
+			d0, d1, d2 = 0, d0, d1
+
+			if prev == joltage {
+				d0 = x
+			}
 		}
 	}
 
